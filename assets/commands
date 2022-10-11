@@ -1,0 +1,19 @@
+fjls
+  adkd
+
+111
+    MOVE  
+  LEFT 
+  PLACE 5,0,NORTH
+  Place 0,0,EAST
+RIGHT
+423
+PLACE 2, 0,EAST
+PLACE 1,3, SOUTH
+  PLACE 2,2,WEST  
+    RIGHT 
+4234  
+    REPORT  
+11
+PLACE 4,4,NORTH
+REPORT
