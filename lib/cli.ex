@@ -1,5 +1,7 @@
 defmodule ToyRobot.CLI do
   def main([path]) do
+    ToyRobot.TableState.start()
+
     ToyRobot.Simulation.read(path)
     |> ToyRobot.Simulation.execute()
   end

@@ -1,5 +1,5 @@
 defmodule ToyRobot.Simulation do
-  alias ToyRobot.{Robot, Table, Utilities}
+  alias ToyRobot.{Robot, Table, Utilities, TableState}
 
   def read(path) do
     # TODO: use instead of File.Read!() or remove
@@ -10,6 +10,20 @@ defmodule ToyRobot.Simulation do
     |> String.split("\r\n")
     |> Enum.map(&String.trim/1)
   end
+
+  """
+  def add_robot(commands, size_x \\ 5, size_y \\ 5) do
+    fn_start = fn ->
+      execute(commands, size_x, size_y)
+    end
+
+    {:ok, pid} = Task.start_link(fn_start)
+    atom_id = Utilities.pid_to_name(pid, "r")
+
+    Process.register(pid, atom_id)
+    pid
+  end
+  """
 
   def execute(commands, size_x \\ 5, size_y \\ 5) do
     # TODO: use with File.Stream!() or remove
@@ -50,10 +64,9 @@ defmodule ToyRobot.Simulation do
       end
 
     # TODO: are multiple valid placements allowed?
-    Enum.reduce(
+    Enum.each(
       commands_place_and_after,
-      %Robot{x: nil, y: nil, dir: nil},
-      fn e, acc -> process_command(e, acc, table) end
+      fn e -> process_command(e, table) end
     )
   end
 
@@ -78,31 +91,28 @@ defmodule ToyRobot.Simulation do
     end
   end
 
-  defp process_command(command, robot, table) do
+  defp process_command(command, table) do
     args = get_place_args(command, table)
 
     cond do
       args ->
         {x, y, dir} = args
 
-        Robot.place(x, y, dir)
+        TableState.place(x, y, dir)
 
       command == "MOVE" ->
-        moved = Robot.move(robot)
+        moved = Robot.move(TableState.get())
 
         if Table.valid_coords?(table, moved.x, moved.y) do
-          moved
-        else
-          robot
+          TableState.move()
         end
 
       command == "REPORT" ->
-        IO.puts(Robot.report(robot))
-        robot
+        IO.puts(TableState.report())
 
-      command == "LEFT" -> Robot.left(robot)
-      command == "RIGHT" -> Robot.right(robot)
-      true -> robot
+      command == "LEFT" -> TableState.left()
+      command == "RIGHT" -> TableState.right()
+      true -> nil
     end
   end
 end

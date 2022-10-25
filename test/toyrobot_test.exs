@@ -1,9 +1,10 @@
 defmodule ToyRobot.Test do
-  alias ToyRobot.{Robot, Simulation}
+  alias ToyRobot.{Robot, Simulation, TableState}
   use ExUnit.Case
 
   setup do
     IO.puts("==========")
+    TableState.start()
     :ok
   end
 
@@ -24,7 +25,7 @@ defmodule ToyRobot.Test do
   end
 
   test "invalid PLACE commands" do
-    commands = [
+    Simulation.execute([
       "PLACE A,0,C",
       "PLACE 3,3,ASDF",
       "PLACE 1,B,WEST",
@@ -39,16 +40,14 @@ defmodule ToyRobot.Test do
       "place 4,4,WEST",
       "PLACE 4,4,west",
       "REPORT"
-    ]
+    ])
 
-    robot = Simulation.execute(commands)
-
-    assert robot == %Robot{x: 2, y: 2, dir: 3}
+    assert TableState.get == %Robot{x: 2, y: 2, dir: 3}
   end
 
   test "placing, turning, moving" do
     # any commands before placement are ignored
-    commands = [
+    Simulation.execute([
       "MOVE",
       "LEFT",
       "PLACE 2,2,WEST",
@@ -56,29 +55,26 @@ defmodule ToyRobot.Test do
       "RIGHT",
       "MOVE",
       "REPORT"
-    ]
+    ])
 
-    robot = Simulation.execute(commands)
-
-    assert robot == %Robot{x: 3, y: 2, dir: 1}
+    assert TableState.get == %Robot{x: 3, y: 2, dir: 1}
   end
 
   test "no valid placement command" do
-    no_place = [
+    Simulation.execute([
       "LEFT",
       "MOVE",
       "RIGHT",
       "REPORT"
-    ]
+    ])
 
-    misplaced = Simulation.execute(no_place)
     expected = %Robot{x: nil, y: nil, dir: nil}
 
-    assert misplaced == expected
+    assert TableState.get == expected
   end
 
   test "spinning in both directions" do
-    counter_cw = [
+    Simulation.execute([
       "PLACE 2,2,NORTH",
       "LEFT",
       "REPORT",
@@ -86,13 +82,11 @@ defmodule ToyRobot.Test do
       "LEFT",
       "LEFT",
       "REPORT"
-    ]
+    ])
 
-    left = Simulation.execute(counter_cw)
+    assert TableState.get == %Robot{x: 2, y: 2, dir: 0}
 
-    assert left == %Robot{x: 2, y: 2, dir: 0}
-
-    cw = [
+    Simulation.execute([
       "PLACE 2,2,WEST",
       "RIGHT",
       "REPORT",
@@ -100,35 +94,31 @@ defmodule ToyRobot.Test do
       "RIGHT",
       "RIGHT",
       "REPORT"
-    ]
+    ])
 
-    right = Simulation.execute(cw)
-
-    assert right == %Robot{x: 2, y: 2, dir: 3}
+    assert TableState.get == %Robot{x: 2, y: 2, dir: 3}
   end
 
   test "trying to move off the table" do
-    top_left =
-      Simulation.execute([
-        "PLACE 0,4,NORTH",
-        "MOVE",
-        "LEFT",
-        "MOVE",
-        "REPORT"
-      ])
+    Simulation.execute([
+      "PLACE 0,4,NORTH",
+      "MOVE",
+      "LEFT",
+      "MOVE",
+      "REPORT"
+    ])
 
-    assert top_left == %Robot{x: 0, y: 4, dir: 3}
+    assert TableState.get == %Robot{x: 0, y: 4, dir: 3}
 
-    bottom_right =
-      Simulation.execute([
-        "PLACE 4,0,SOUTH",
-        "MOVE",
-        "LEFT",
-        "MOVE",
-        "REPORT"
-      ])
+    Simulation.execute([
+      "PLACE 4,0,SOUTH",
+      "MOVE",
+      "LEFT",
+      "MOVE",
+      "REPORT"
+    ])
 
-    assert bottom_right == %Robot{x: 4, y: 0, dir: 1}
+    assert TableState.get == %Robot{x: 4, y: 0, dir: 1}
   end
 
   test "invalid table dimensions" do
@@ -139,17 +129,18 @@ defmodule ToyRobot.Test do
     ]
 
     no_robot = %Robot{x: nil, y: nil, dir: nil}
-    no_x = Simulation.execute(commands, 0, 1)
 
-    assert no_x == no_robot
+    Simulation.execute(commands, 0, 1)
 
-    no_y = Simulation.execute(commands, 4, -2)
+    assert TableState.get == no_robot
 
-    assert no_y == no_robot
+    Simulation.execute(commands, 4, -2)
 
-    no_both = Simulation.execute(commands, 0, -2)
+    assert TableState.get == no_robot
 
-    assert no_both == no_robot
+    Simulation.execute(commands, 0, -2)
+
+    assert TableState.get == no_robot
   end
 
   test "other board sizes" do
@@ -164,16 +155,16 @@ defmodule ToyRobot.Test do
       "REPORT"
     ]
 
-    one_by_one = Simulation.execute(commands, 1, 1)
+    Simulation.execute(commands, 1, 1)
 
-    assert one_by_one == %Robot{x: 0, y: 0, dir: 1}
+    assert TableState.get == %Robot{x: 0, y: 0, dir: 1}
 
-    rect = Simulation.execute(commands, 3, 1)
+    Simulation.execute(commands, 3, 1)
 
-    assert rect == %Robot{x: 2, y: 0, dir: 1}
+    assert TableState.get == %Robot{x: 2, y: 0, dir: 1}
 
-    six_by_six = Simulation.execute(commands, 6, 6)
+    Simulation.execute(commands, 6, 6)
 
-    assert six_by_six == %Robot{x: 5, y: 0, dir: 1}
+    assert TableState.get == %Robot{x: 5, y: 0, dir: 1}
   end
 end
