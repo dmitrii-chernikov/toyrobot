@@ -16,6 +16,7 @@ defmodule ToyRobot.Robot do
       1 -> %Robot{robot | x: robot.x + 1}
       2 -> %Robot{robot | y: robot.y - 1}
       3 -> %Robot{robot | x: robot.x - 1}
+      _ -> robot
     end
   end
 
@@ -35,19 +36,29 @@ defmodule ToyRobot.Robot do
     turn(robot, fn_right)
   end
 
-  def report(robot) do
+  def report(robot, name \\ "") do
     side = Utilities.value_to_dir(robot.dir)
 
     msg = [
-      "The robot is currently at",
+      "The robot \"#{name}\" is currently at",
       "(#{robot.x}, #{robot.y}) and it's",
       "facing #{side}."
     ]
 
-    Enum.join(msg, " ")
+    IO.puts(Enum.join(msg, " "))
   end
 
   defp turn(robot, fn_turn) do
-    %Robot{robot | dir: fn_turn.(robot.dir)}
+    dir_current = robot.dir
+
+    dir_new =
+      cond do
+        is_integer(dir_current) ->
+          fn_turn.(dir_current)
+
+        true -> nil
+      end
+
+    %Robot{robot | dir: dir_new}
   end
 end
